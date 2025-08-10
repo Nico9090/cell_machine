@@ -1,16 +1,13 @@
-#cell shape type
+from dataclasses import dataclass
+@dataclass
 class Cell():
-    def __init__(self,x,y,z):
-        super().__init__()
-        self.x=x
-        self.y=y
-        self.z=z
-    def calculate_cell_surface_area(self):
-        surface_area=self.x*self.y
-        return surface_area
-    def calculate_cell_volume(self):
-        volume=self.x*self.y*self.z
-        return volume
+    plasma_membrane_outer_minus_inner:float #distance between outer membrane and inner membrane of plasma membrane
+    nuclear_membrane_outer_minus_inner:float
+    y_max:float
+    x_max:float
+    y_min:float
+    x_min:float
+
 
 
 

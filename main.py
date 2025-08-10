@@ -1,10 +1,9 @@
 from cell import Cell
 from grow import Grow
-from organelles import AddOrganelle
+from organelle import Organelle
 
-epithelial=Grow(2,5,3)
-print(epithelial.append_organelle_list("nucleus"))
-print("Cell contents: ",epithelial.organelle_details())
+epithelial_cell=Grow()
+print(epithelial_cell.define_cell(5,3,10,8,-10,-8))
 #print("Surface area: ", epithelial.calculate_cell_surface_area())
 #print("Volume: ", epithelial.calculate_volume())
 
