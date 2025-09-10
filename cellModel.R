@@ -1,10 +1,37 @@
 #plot 3D cell
-install.packages("rgl")
 library(rgl)
 close3d() # closes current device
 rgl.quit() 
 
-library(rgl)
+meshGrid <- function(){
+  theta <- seq(0, 2*pi, length.out = 50)  # cut off at thetaSlice
+  phi <- seq(0, pi, length.out = 50)
+  
+  # Create meshgrid
+  thetaGrid <- matrix(rep(theta, each = length(phi)), nrow = length(phi))
+  phiGrid <- matrix(rep(phi, times = length(theta)), nrow = length(phi))
+  return(list(thetaGrid = thetaGrid,
+              phiGrid = phiGrid))
+
+}
+
+# Outer sphere coordinates
+
+drawRibosomes <- function(location,radius,
+                          thetaGrid,
+                          phiGrid,
+                          color){
+  
+  x <- radius * sin(phiGrid) * cos(thetaGrid)
+  x <- x + location[1]
+  y <- radius * sin(phiGrid) * sin(thetaGrid)
+  y <- y + location[2]
+  z <- radius * cos(phiGrid)
+  z <- z + location[3]
+  surface3d(x,y,z,
+            color = color,
+            alpha = 0.7)
+}
 drawGolgi <- function(center, rx, ry, rz, color = "orange", alpha = 0.8) {
   # Create theta (azimuthal) and phi (polar) angles
   theta <- seq(0, pi, length.out = 50)
@@ -86,17 +113,17 @@ drawPeptide <- function(start = c(0, 0, 0),
                         n = 2, 
                         spacing = 0.7,
                         radius = 0.3,
-                        color = c("orange","blue4")) {
+                        color = c("orange","blue4"),
+                        direction = c(1,0,0)) {
+  direction <- direction / sqrt(sum(direction^2))
   for (i in 0:(n - 1)) {
     # Position of each amino acid
-    pos <- start + c(i * spacing, 0, 0)
-    
-    # Draw the amino acid as a sphere
+    pos <- start + i*spacing*direction
     spheres3d(pos[1], pos[2], pos[3], radius = radius, color = color[i+1])
     
     # Draw bond to next amino acid (if not last)
     if (i < n - 1) {
-      next_pos <- start + c((i + 1) * spacing, 0, 0)
+      next_pos <- start + (i+1)*spacing*direction
       
       # Draw cylinder as peptide bond
       bond <- cylinder3d(rbind(pos, next_pos), 
@@ -163,10 +190,19 @@ plotCell <- function(innerRadius,
   
   #protein
   drawPeptide(start = c(2,0,0))
-  drawPeptide(start = c(0,3.7,0),spacing = 1.4)
+  drawPeptide(start = c(0,4.5,0),spacing = 1.4,
+              direction = c(1,6,1))
+  
+  #ribosomes
+  meshGrid <- meshGrid()
+  ribosomeThetaGrid <- meshGrid$thetaGrid
+  ribsosomePhiGrid <- meshGrid$phiGrid
+  drawRibosomes(location = c(-0.5,0,3),
+                radius = 0.5,thetaGrid = ribosomeThetaGrid,
+                phiGrid = ribsosomePhiGrid,color = "lightblue1")
   # Axes
-  #axes3d()
-  #title3d(xlab = "X", ylab = "Y", zlab = "Z")
+  axes3d()
+  title3d(xlab = "X", ylab = "Y", zlab = "Z")
 }
 plotCell(innerRadius = 4.5,
          outerRadius = 5,
