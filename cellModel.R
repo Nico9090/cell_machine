@@ -3,8 +3,8 @@ library(rgl)
 close3d() # closes current device
 rgl.quit() 
 
-meshGrid <- function(){
-  theta <- seq(0, 2*pi, length.out = 50)  # cut off at thetaSlice
+meshGrid <- function(thetaSlice = 2*pi){
+  theta <- seq(0, thetaSlice, length.out = 50)  # cut off at thetaSlice
   phi <- seq(0, pi, length.out = 50)
   
   # Create meshgrid
@@ -12,7 +12,7 @@ meshGrid <- function(){
   phiGrid <- matrix(rep(phi, times = length(theta)), nrow = length(phi))
   return(list(thetaGrid = thetaGrid,
               phiGrid = phiGrid))
-
+  
 }
 
 # Outer sphere coordinates
@@ -194,10 +194,10 @@ plotCell <- function(innerRadius,
               direction = c(1,6,1))
   
   #ribosomes
-  meshGrid <- meshGrid()
+  meshGrid <- meshGrid(thetaSlice = 3*pi/4)
   ribosomeThetaGrid <- meshGrid$thetaGrid
   ribsosomePhiGrid <- meshGrid$phiGrid
-  drawRibosomes(location = c(-0.5,0,3),
+  drawRibosomes(location = c(1,1,3),
                 radius = 0.5,thetaGrid = ribosomeThetaGrid,
                 phiGrid = ribsosomePhiGrid,color = "lightblue1")
   # Axes
@@ -207,3 +207,222 @@ plotCell <- function(innerRadius,
 plotCell(innerRadius = 4.5,
          outerRadius = 5,
          thetaSlice = -3*pi/2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+clear3d()
+grid <- meshGrid(thetaSlice = -3.8*pi/2)
+ribosomeThetaGrid <- grid$thetaGrid
+ribsosomePhiGrid <- grid$phiGrid
+drawRibosomes(location = c(1,1,3),
+              radius = 0.5,thetaGrid = ribosomeThetaGrid,
+              phiGrid = ribsosomePhiGrid,color = "lightblue1")
+axes3d()
+title3d(xlab = "X", ylab = "Y", zlab = "Z")
+
+
+
+
+
+meshGrid <- function(thetaSlice = 2*pi, phiRange = c(0, pi)){
+  theta <- seq(0, thetaSlice, length.out = 50)
+  phi <- seq(phiRange[1], phiRange[2], length.out = 50)
+  
+  thetaGrid <- matrix(rep(theta, each = length(phi)), nrow = length(phi))
+  phiGrid <- matrix(rep(phi, times = length(theta)), nrow = length(phi))
+  
+  return(list(thetaGrid = thetaGrid, phiGrid = phiGrid))
+}
+clear3d()
+# Upper hemisphere
+gridTop <- meshGrid(thetaSlice = 2*pi, phiRange = c(0, pi/2))
+drawRibosomes(location = c(0, 0, 0), radius = 1,
+              thetaGrid = gridTop$thetaGrid,
+              phiGrid = gridTop$phiGrid,
+              color = "red")
+
+# Lower hemisphere
+gridBottom <- meshGrid(thetaSlice = 2*pi, phiRange = c(pi/2, pi))
+drawRibosomes(location = c(0, 0, 0), radius = 1,
+              thetaGrid = gridBottom$thetaGrid,
+              phiGrid = gridBottom$phiGrid,
+              color = "blue")
+axes3d()
+title3d(xlab = "X", ylab = "Y", zlab = "Z")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library(misc3d)
+
+
+
+
+
+
+drawCilia <- function(gridLocation=c(0,0,0),
+                      radius = 0.5,
+                      height = 10,
+                      color = "steelblue"){
+  theta <- seq(0, 2*pi, length.out = 50)
+  z <- seq(0, height, length.out = 20)
+  
+  thetaGrid <- matrix(rep(theta, each = length(z)), nrow = length(z))
+  zGrid <- matrix(rep(z, times = length(theta)), nrow = length(z))
+  
+  x <- radius * cos(thetaGrid) + gridLocation[1]
+  y <- radius * sin(thetaGrid) + gridLocation[2]
+  z <- zGrid + gridLocation[3]
+  
+  surface3d(x, y, z, color = color, alpha = 0.7)
+  
+}
+clear3d()
+drawCilia()
+axes3d()
+title3d(xlab = "X", ylab = "Y", zlab = "Z")
+
+
+clear3d()
+
+drawCylinderBetween <- function(p1,
+                                p2,
+                                radius = 0.1,
+                                color = "steelblue") {
+  cyl <- cylinder3d(
+    center = rbind(p1, p2),
+    radius = radius,
+    sides = 50
+  )
+  shade3d(cyl, color = color)
+}
+
+# Parameters
+n_cylinders <- 9
+ring_radius <- 2        # Radius of the circular arrangement
+cylinder_height <- 12    # Length of each cylinder
+cylinder_radius <- 0.15 # Thickness of each microtubule
+
+# Loop to place each cylinder
+for (i in 0:(n_cylinders - 1)) {
+  angle <- 2 * pi * i / n_cylinders
+  
+  # Base and top point of the cylinder
+  x <- ring_radius * cos(angle)
+  y <- ring_radius * sin(angle)
+  
+  base_point <- c(x, y, 0)
+  top_point  <- c(x, y, cylinder_height)
+  
+  drawCylinderBetween(base_point, top_point,
+                      radius = cylinder_radius,
+                      color = "steelblue")
+}
+
+# Optional: Add 2 central microtubules (the "+2")
+center1 <- c(0.3, 0, 0)
+center2 <- c(-0.3, 0, 0)
+
+drawCylinderBetween(center1, center1 + c(0, 0, cylinder_height),
+                    radius = cylinder_radius, color = "red")
+drawCylinderBetween(center2, center2 + c(0, 0, cylinder_height),
+                    radius = cylinder_radius, color = "red")
+# Parameters for primary cilium
+cilium_radius <- 0.2
+cilium_height <- 6  # Much longer than the axoneme
+cilium_color <- "gray"
+
+# Base point: centered at origin, top point: extended along z
+cilium_base <- c(0, 0, cylinder_height)  # Start from top of axoneme
+cilium_top  <- c(0, 0, cylinder_height + cilium_height)
+
+# Draw the cilium
+drawCylinderBetween(cilium_base, cilium_top,
+                    radius = cilium_radius,
+                    color = cilium_color)
+
+vertices <- rbind(
+  c(3, -3, 0),   # 1: bottom-front-left
+  c(-3, -3, 0),  # 2: bottom-front-right
+  c(-3, 3, 0),   # 3: top-front-right
+  c(3, 3, 0),    # 4: top-front-left
+  c(3, -3, 20),   # 5: bottom-back-left
+  c(-3, -3, 20),  # 6: bottom-back-right
+  c(-3, 3, 20),   # 7: top-back-right
+  c(3, 3, 20)     # 8: top-back-left
+)
+
+# Define 6 faces (quads), using indices of vertices
+faces <- list(
+  bottom = c(1, 2, 3, 4),  # red base
+  top    = c(8, 7, 6, 5),
+  front  = c(1, 4, 8, 5),
+  back   = c(2, 6, 7, 3),
+  left   = c(2, 1, 5, 6),
+  right  = c(4, 3, 7, 8)
+)
+
+# Draw each face using quads3d
+for (face in faces) {
+  quads3d(vertices[face, ], color = "red", alpha = 0.3)
+}
+
+vertices <- rbind(
+  c(4, -4, 0),   # 1: bottom-front-left
+  c(-4, -4, 0),  # 2: bottom-front-right
+  c(-4, 4, 0),   # 3: top-front-right
+  c(4, 4, 0),    # 4: top-front-left
+  c(4, -4, 20),   # 5: bottom-back-left
+  c(-4, -4, 20),  # 6: bottom-back-right
+  c(-4, 4, 20),   # 7: top-back-right
+  c(4, 4, 20)     # 8: top-back-left
+)
+
+# Define 6 faces (quads), using indices of vertices
+faces <- list(
+  bottom = c(1, 2, 3, 4),  # red base
+  top    = c(8, 7, 6, 5),
+  front  = c(1, 4, 8, 5),
+  back   = c(2, 6, 7, 3),
+  left   = c(2, 1, 5, 6),
+  right  = c(4, 3, 7, 8)
+)
+
+# Draw each face using quads3d
+for (face in faces) {
+  quads3d(vertices[face, ], color = "blue4", alpha = 0.3)
+}
+
+
