@@ -66,6 +66,44 @@ draw_wavy_edge <- function(p1, p2, amplitude = 0.1, frequency = 5, col = "steelb
   # Draw wavy line
   lines3d(x, y, z, col = col, lwd = lwd)
 }
+draw_filled_outer_cube <- function(verts, col = "steelblue", alpha = 0.4) {
+  faces <- list(
+    c(1,2,3,4),  # bottom
+    c(5,6,7,8),  # top
+    c(1,2,6,5),  # side
+    c(2,3,7,6),
+    c(3,4,8,7),
+    c(4,1,5,8)   # side
+  )
+  
+  for (face in faces) {
+    quads3d(verts[face, ], col = col, alpha = alpha)
+  }
+}
+draw_filled_cube <- function(verts, col = "steelblue", alpha = 0.4, amplitude = 0.05, frequency = 3, res = 10) {
+  faces <- list(
+    c(1,2,3,4),  # bottom
+    c(5,6,7,8),  # top
+    c(1,2,6,5),  # side
+    c(2,3,7,6),
+    c(3,4,8,7),
+    c(4,1,5,8)   # side
+  )
+  
+  for (face in faces) {
+    draw_wavy_face(
+      p1 = verts[face[1], ],
+      p2 = verts[face[2], ],
+      p3 = verts[face[3], ],
+      p4 = verts[face[4], ],
+      col = col,
+      alpha = alpha,
+      amplitude = amplitude,
+      frequency = frequency,
+      res = res
+    )
+  }
+}
 # -------------------------------
 
 # SHINY APP
@@ -76,8 +114,10 @@ ui <- fluidPage(
   titlePanel("Interactive Wavy 3D Cells"),
   sidebarLayout(
     sidebarPanel(
-      sliderInput("amplitude", "Wave amplitude:", 0, 0.5, 0.1, step = 0.01),
-      sliderInput("frequency", "Wave frequency:", 1, 10, 3, step = 0.5)
+      sliderInput("outer_amplitude", "Outer wave amplitude:", 0, 0.5, 0.1, step = 0.01),
+      sliderInput("outer_frequency", "Outer wave frequency:", 1, 10, 3, step = 0.5),
+      sliderInput("inner_amplitude", "Inner wave amplitude:", 0, 0.5, 0.1, step = 0.01),
+      sliderInput("inner_frequency", "Inner wave frequency:", 1, 10, 3, step = 0.5)
     ),
     mainPanel(
       rglwidgetOutput("cells3d", width = "100%", height = "600px")
@@ -90,15 +130,22 @@ server <- function(input, output, session) {
     # Create new rgl device for offscreen rendering
     rgl.open(useNULL = TRUE)
     rgl.clear()
-    
+    bg3d("white")
     # Build cube
     outer_verts <- make_cube_vertices(center = c(0.5, 0.5, 0.5), size = 1)
     draw_wire_cube(
       verts = outer_verts,
-      amplitude = input$amplitude,
-      frequency = input$frequency
+      amplitude = input$outer_amplitude,
+      frequency = input$outer_frequency
     )
-    
+    inner_verts <- make_cube_vertices(center = c(0.5, 0.5, 0.5), size = 0.5)
+    draw_wire_cube(
+      verts = inner_verts,
+      amplitude = input$inner_amplitude,
+      frequency = input$inner_frequency
+    )
+    draw_filled_outer_cube(outer_verts,col = "steelblue",alpha = 0.4)
+    draw_filled_cube(inner_verts,col = "darkred",alpha = 0.8)
     # Return widget
     rglwidget()
   })
