@@ -1,8 +1,7 @@
 #extracellular matrix in ARPKD
 library(rgl)
 clear3d()
-open3d()
-# Define cube corners (a unit cube)
+#open3d()
 verts <- matrix(c(
   0, 0, 0,  # v1
   1, 0, 0,  # v2
@@ -35,10 +34,10 @@ for (edge in edges) {
 points3d(verts[,1], verts[,2], verts[,3], col = "red", size = 8)
 
 inner_verts <- matrix(c(
-  0.25, 0.25, 0,  # v1
-  0.75, 0.25, 0,  # v2
-  0.75, 0.75, 0,  # v3
-  0.25, 0.75, 0,  # v4
+  0.25, 0.25, 0.25,  # v1
+  0.75, 0.25, 0.25,  # v2
+  0.75, 0.75, 0.25,  # v3
+  0.25, 0.75, 0.25,  # v4
   0.25, 0.25, 0.75,  # v5
   0.75, 0.25, 0.75,  # v6
   0.75, 0.75, 0.75,  # v7
