@@ -1,89 +1,74 @@
 library(shiny)
 library(rgl)
-
-# ----- Function to draw wavy cubes -----
-
-library(shiny)
-library(rgl)
-
-# Generate a wavy cube based on user parameters
-wavy_cube <- function(radius = 0.5, amplitude = 0.1, frequency = 3) {
-  # Start with a cube
-  base <- cube3d()
-  
-  # Extract the vertices
-  verts <- base$vb  # 4 x N matrix (homogeneous coordinates)
-  
-  # Apply wave deformation to X and/or Y or Z axes
-  # For example, modulate Z as a function of X and Y
-  for (i in 1:ncol(verts)) {
-    x <- verts[1, i]
-    y <- verts[2, i]
-    verts[3, i] <- verts[3, i] + amplitude * sin(frequency * pi * x) * sin(frequency * pi * y)
-  }
-  
-  base$vb <- verts
-  
-  # Scale the wavy cube
-  base <- scale3d(base, radius, radius, radius)
-  
-  return(base)
-}
-
-# Draw the scene with multiple wavy cells
-draw_cell <- function(radius = 0.5, spacing = 1, amplitude = 0.1, frequency = 3, alpha = 0.5) {
-  clear3d()
-  xpos <- seq(0, 5) * spacing
-  
-  inner_radius <- radius * 2/3
-  
-  for (x in xpos) {
-    # Outer wavy cube
-    shade3d(translate3d(wavy_cube(radius, amplitude, frequency), x, 0, 0),
-            color = "steelblue", alpha = alpha * 0.4)
-    
-    # Inner cube (no waves)
-    shade3d(translate3d(scale3d(cube3d(), inner_radius,
-                                inner_radius, inner_radius), x, 0, 0),
-            color = "red4", alpha = alpha)
-  }
-  rglwidget()
-}
-
-
-# -------------------------------
-
-# SHINY APP
-
-# -------------------------------
-
+source("functions.R")
+source("objects.R")
+#also working
 ui <- fluidPage(
-  titlePanel("Interactive Wavy 3D Cells"),
   sidebarLayout(
     sidebarPanel(
-      sliderInput("radius", "Cell radius:", 0.1, 1, 0.5, step = 0.05),
-      sliderInput("spacing", "Cell spacing:", 0.5, 2, 1, step = 0.1),
-      sliderInput("amplitude", "Wave amplitude:", 0, 0.5, 0.1, step = 0.01),
-      sliderInput("frequency", "Wave frequency:", 1, 10, 3, step = 0.5),
-      sliderInput("alpha", "Transparency:", 0, 1, 0.5, step = 0.05)
+      sliderInput("amplitude", "wave amplitude:", 0, 0.5, 0.1, step = 0.01),
+      sliderInput("frequency", "wave frequency:", 1, 10, 3, step = 0.5)
     ),
     mainPanel(
-      rglwidgetOutput("cells3d", width = "100%", height = "600px")
+      rglwidgetOutput("cells3d",width = "100%", height = "600px")
     )
   )
 )
 
 server <- function(input, output, session) {
+  # Debounce input values outside reactive contexts
+  debounced_amplitude <- debounce(reactive(input$amplitude), 200)
+  debounced_frequency <- debounce(reactive(input$frequency), 200)
+  
   output$cells3d <- renderRglwidget({
-    draw_cell(
-      radius = input$radius,
-      spacing = input$spacing,
-      amplitude = input$amplitude,
-      frequency = input$frequency,
-      alpha = input$alpha
-    )
+    # Get debounced input values
+    ampl <- debounced_amplitude()
+    freq <- debounced_frequency()
+    
+    # Avoid redrawing every primitive live
+    par3d(skipRedraw = TRUE)
+    
+    # Clear and set background
+    rgl.clear()
+    bg3d("white")
+    
+    # Static structures
+    for (cell in cells){  # from objects.R
+      draw_wire_cube(
+        verts = cell,
+        amplitude = ampl,
+        frequency = freq
+      )
+    }
+    
+    for (cell in outer_membrane){  # from objects.R
+      draw_filled_outer_cube(
+        verts = cell,
+        col = "steelblue",
+        alpha = 0.4
+      )
+    }
+    
+    # Dynamic structures
+    for (cell in inner_membrane){  # from objects.R
+      draw_filled_cube(
+        verts = cell,
+        col = "red4",
+        alpha = 0.8,
+        amplitude = ampl,
+        frequency = freq
+      )
+    }
+    
+    par3d(skipRedraw = FALSE)
+    
+    # Return the rendered widget
+    rglwidget()
   })
 }
+
+
+
 
 
 shinyApp(ui, server)
